@@ -1,22 +1,24 @@
 package main
 
-import "github.com/scottrangerio/go-chip8/display"
-import "time"
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
 
-var zeroSprite = display.Sprite{
-	0xF0,
-	0x90,
-	0x90,
-	0x90,
-	0xF0,
-}
+	"github.com/scottrangerio/go-chip8/cpu"
+)
 
 func main() {
-	d := new(display.Display)
-	d.Init()
-	defer d.Close()
+	cpu := cpu.NewCPU()
 
-	d.DrawSprite(63, 0, zeroSprite)
+	rom, err := ioutil.ReadFile("./roms/pong.rom")
 
-	time.Sleep(2 * time.Second)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cpu.LoadRom(rom)
+	op := cpu.Run()
+
+	fmt.Printf("%04X\n", op)
 }

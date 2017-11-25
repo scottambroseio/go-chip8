@@ -1,10 +1,13 @@
 package display
 
-import "github.com/nsf/termbox-go"
-import "log"
+import (
+	"log"
+
+	"github.com/nsf/termbox-go"
+)
 
 // Display represents a CHIP-8 display
-type Display [height][width]bool
+type Display [width][height]bool
 
 // Sprite represents a CHIP-8 sprite
 type Sprite []byte
@@ -22,7 +25,11 @@ func (d *Display) Init() {
 }
 
 // DrawSprite draws a sprite to the display
-func (d *Display) DrawSprite(x, y int, s Sprite) {
+func (d *Display) DrawSprite(x, y int, s Sprite) bool {
+	defer d.refresh()
+
+	collision := false
+
 	for i, v := range s {
 		for i2, v2 := range getBitsFromByte(v) {
 			x2, y2 := x+i2, i+y
@@ -35,15 +42,33 @@ func (d *Display) DrawSprite(x, y int, s Sprite) {
 				y2 = y2 - height
 			}
 
-			if v2 == 1 {
-				termbox.SetCell(x2, y2, ' ', termbox.ColorWhite, termbox.ColorWhite)
-			} else {
-				termbox.SetCell(x2, y2, ' ', termbox.ColorWhite, termbox.ColorDefault)
+			current := d[x2][y2]
+			new := (v2 == 1)
+			d[x2][y2] = current != new
+
+			if !collision && current && !new {
+				collision = true
 			}
 		}
 	}
 
-	termbox.Flush()
+	return collision
+}
+
+func (d *Display) refresh() {
+	defer termbox.Flush()
+
+	for x := range d {
+		for y := range d[x] {
+			v := d[x][y]
+
+			if v {
+				termbox.SetCell(x, y, ' ', termbox.ColorWhite, termbox.ColorWhite)
+			} else {
+				termbox.SetCell(x, y, ' ', termbox.ColorWhite, termbox.ColorDefault)
+			}
+		}
+	}
 }
 
 // Close terminates and shuts down the display

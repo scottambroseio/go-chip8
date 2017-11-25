@@ -3,8 +3,14 @@ package display
 import "github.com/nsf/termbox-go"
 import "log"
 
-type Display [64][32]bool
+// Display represents a CHIP-8 display
+type Display [height][width]bool
+
+// Sprite represents a CHIP-8 sprite
 type Sprite []byte
+
+const width = 64
+const height = 32
 
 // Init initializing the display
 func (d *Display) Init() {
@@ -16,13 +22,23 @@ func (d *Display) Init() {
 }
 
 // DrawSprite draws a sprite to the display
-func (d *Display) DrawSprite(s Sprite) {
+func (d *Display) DrawSprite(x, y int, s Sprite) {
 	for i, v := range s {
 		for i2, v2 := range getBitsFromByte(v) {
+			x2, y2 := x+i2, i+y
+
+			if x2 > width-1 {
+				x2 = x2 - width
+			}
+
+			if y2 > height-1 {
+				y2 = y2 - height
+			}
+
 			if v2 == 1 {
-				termbox.SetCell(i2, i, ' ', termbox.ColorWhite, termbox.ColorWhite)
+				termbox.SetCell(x2, y2, ' ', termbox.ColorWhite, termbox.ColorWhite)
 			} else {
-				termbox.SetCell(i2, i, ' ', termbox.ColorWhite, termbox.ColorDefault)
+				termbox.SetCell(x2, y2, ' ', termbox.ColorWhite, termbox.ColorDefault)
 			}
 		}
 	}

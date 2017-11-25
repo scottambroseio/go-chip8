@@ -16,7 +16,7 @@ func main() {
 	d.Init()
 	defer d.Close()
 
-	d.DrawSprite(zeroSprite)
+	d.DrawSprite(63, 0, zeroSprite)
 
 	time.Sleep(2 * time.Second)
 }

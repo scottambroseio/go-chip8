@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -18,7 +17,10 @@ func main() {
 	}
 
 	cpu.LoadRom(rom)
-	op := cpu.Run()
-
-	fmt.Printf("%04X\n", op)
+	// go func() {
+	// 	time.Sleep(10 * time.Second)
+	// 	termbox.Close()
+	// 	os.Exit(0)
+	// }()
+	cpu.Run()
 }

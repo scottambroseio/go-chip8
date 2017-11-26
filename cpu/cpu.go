@@ -221,8 +221,8 @@ func (c *CPU) Run(done chan struct{}) {
 				case 0x0033:
 					x := op.X()
 					c.memory.WriteByteAt(c.v[x]/100, int(c.i))
-					c.memory.WriteByteAt((c.v[x]/10)%10, int(c.i))
-					c.memory.WriteByteAt((c.v[x]%100)%10, int(c.i))
+					c.memory.WriteByteAt((c.v[x]/10)%10, int(c.i+1))
+					c.memory.WriteByteAt((c.v[x]%100)%10, int(c.i+2))
 
 					c.pc += 2
 				case 0x0065:

@@ -6,6 +6,7 @@ import (
 
 	"github.com/scottrangerio/go-chip8/cpu/opcode"
 	"github.com/scottrangerio/go-chip8/display"
+	m "github.com/scottrangerio/go-chip8/memory"
 	"github.com/scottrangerio/go-chip8/sprites"
 )
 
@@ -13,13 +14,18 @@ import (
 func (c *CPU) LoadRom(d []byte) {
 	s := 0x200
 
-	for i := 0; i < len(d); i++ {
-		c.memory[s+i] = d[i]
-	}
+	c.memory.WriteBytesAt(d, s)
 }
 
 func (c *CPU) getOpcode() opcode.Opcode {
-	return opcode.NewOpcode(c.memory[c.pc], c.memory[c.pc+1])
+	return opcode.NewOpcode(c.memory.ReadByteAt(int(c.pc)), c.memory.ReadByteAt(int(c.pc+1)))
+}
+
+type memory interface {
+	WriteBytesAt(b []byte, off int)
+	ReadBytesAt(b []byte, off int)
+	WriteByteAt(b byte, off int)
+	ReadByteAt(off int) byte
 }
 
 // CPU represents a CHIP-8 CPU
@@ -31,7 +37,7 @@ type CPU struct {
 	stack  [16]uint16
 	sound  byte
 	timer  byte
-	memory [4096]byte
+	memory memory
 	st     byte
 	dt     byte
 }
@@ -39,14 +45,12 @@ type CPU struct {
 // NewCPU creates and initializes a new CPU
 func NewCPU() *CPU {
 	cpu := &CPU{
-		pc: 0x200,
+		pc:     0x200,
+		memory: new(m.Memory),
 	}
 
-	for i, c := 0, 0; i < 16; i++ {
-		for j := 0; j < 5; j++ {
-			cpu.memory[c+i+j] = sprites.Sprites[i][j]
-		}
-		c += 4
+	for i, s := range sprites.Sprites {
+		cpu.memory.WriteBytesAt(s[:], i+(i*4))
 	}
 
 	return cpu
@@ -169,7 +173,8 @@ func (c *CPU) Run() opcode.Opcode {
 			y := c.v[op.Y()]
 			n := uint16(op.N())
 
-			b := c.memory[c.i : c.i+n]
+			b := make([]byte, n, n)
+			c.memory.ReadBytesAt(b, int(c.i))
 
 			d.DrawSprite(int(x), int(y), b)
 			time.Sleep((1000 / 60) * time.Millisecond)
@@ -211,16 +216,16 @@ func (c *CPU) Run() opcode.Opcode {
 				c.pc += 2
 			case 0x0033:
 				x := op.X()
-				c.memory[c.i] = c.v[x] / 100
-				c.memory[c.i+1] = (c.v[x] / 10) % 10
-				c.memory[c.i+2] = (c.v[x] % 100) % 10
+				c.memory.WriteByteAt(c.v[x]/100, int(c.i))
+				c.memory.WriteByteAt((c.v[x]/10)%10, int(c.i))
+				c.memory.WriteByteAt((c.v[x]%100)%10, int(c.i))
 
 				c.pc += 2
 			case 0x0065:
 				x := uint16(op.X())
 
 				for i := uint16(0); i <= x; i++ {
-					c.v[i] = c.memory[c.i+i]
+					c.v[i] = c.memory.ReadByteAt(int(c.i + i))
 				}
 				c.pc += 2
 			default:

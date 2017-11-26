@@ -57,7 +57,7 @@ func NewCPU() *CPU {
 }
 
 // Run runs the emulator
-func (c *CPU) Run(done chan struct{}) {
+func (c *CPU) Run(done chan struct{}, kb map[byte]bool) {
 	d := new(display.Display)
 	d.Init()
 	defer d.Close()
@@ -181,20 +181,17 @@ func (c *CPU) Run(done chan struct{}) {
 				c.memory.ReadBytesAt(b, int(c.i))
 
 				d.DrawSprite(int(x), int(y), b)
-				time.Sleep((1000 / 60) * time.Millisecond)
+				time.Sleep((1000 / 120) * time.Millisecond)
 				c.pc += 2
 			case 0xE:
 				switch op.KK() {
 				case 0x00A1:
-					rand.Seed(time.Now().Unix())
-
-					if rand.Intn(2) == 1 {
+					if !kb[c.v[op.X()]] {
 						c.pc += 2
 					}
 					c.pc += 2
 				case 0x009E:
-					rand.Seed(time.Now().Unix())
-					if rand.Intn(2) == 1 {
+					if kb[c.v[op.X()]] {
 						c.pc += 2
 					}
 					c.pc += 2
